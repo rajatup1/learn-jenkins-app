@@ -23,7 +23,7 @@ pipeline {
          stage('Test') {
             steps{
                 sh '''
-                    find index.html /build
+                    find -f index.html /var/jenkins_home/workspace/learn-jenkins-app/build
                     npm test
 
                 '''
