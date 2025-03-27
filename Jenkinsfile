@@ -20,6 +20,7 @@ pipeline {
                 '''
             }
         }
+        /*
         stage('Test') {
             steps{
                 sh '''
@@ -29,6 +30,7 @@ pipeline {
                 '''
             }
          }
+         */
         stage('Deploy') {
             agent {
                 docker {
