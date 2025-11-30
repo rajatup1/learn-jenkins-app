@@ -24,6 +24,31 @@ pipeline {
                 '''
             }
         }
+        stage("aws deploy"){
+
+          agent{
+             docker{
+                image 'amazon/aws-cli:latest'
+                args '--entrypoint=""'
+                reuseNode true
+            }
+        }
+          environment{
+            AWS_BUCKET_NAME = 'deno-s3-bucket'
+          }
+
+          steps {
+                withCredentials([usernamePassword(credentialsId: 'aws-creds', passwordVariable: 'AWS_SECRET_ACCESS_KEY', usernameVariable: 'AWS_ACCESS_KEY_ID')]) {
+                    sh'''
+                    aws --version
+                    aws s3 sync build s3://$AWS_BUCKET_NAME
+                    
+                    '''
+                 }
+                
+            }
+              
+        }
         /*
         stage('Test') {
             steps{
