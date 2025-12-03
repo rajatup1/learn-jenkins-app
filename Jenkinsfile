@@ -12,7 +12,7 @@ pipeline {
           agent{
              docker{
                 image 'amazon/aws-cli:latest'
-                args '--entrypoint=""'
+                args '-u root --entrypoint=""'
                 reuseNode true
             }
         }
@@ -21,8 +21,10 @@ pipeline {
                 withCredentials([usernamePassword(credentialsId: 'aws-creds', passwordVariable: 'AWS_SECRET_ACCESS_KEY', usernameVariable: 'AWS_ACCESS_KEY_ID')]) {
                     sh'''
                     aws --version
-                    aws ecs register-task-definition --cli-input-json file://aws/task-definition-prod.json
-                    aws ecs update-service --cluster learn-jenkins-prod  --service learn-jenkins-prod-taskdefinition-service-lf4jjyoa  --task-definition learn-jenkins-prod-taskdefinition:2
+                    yum install jq -y
+                    LATEST_TD_REVISION=$(aws ecs register-task-definition --cli-input-json file://aws/task-definition-prod.json | jq '.taskDefinition.revision')
+                    echo $LATEST_TD_REVISION
+                    aws ecs update-service --cluster learn-jenkins-prod  --service learn-jenkins-prod-taskdefinition-service-lf4jjyoa  --task-definition learn-jenkins-prod-taskdefinition:$LATEST_TD_REVISION
                     '''
                  }
                 
