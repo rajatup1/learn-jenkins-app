@@ -3,35 +3,37 @@ pipeline {
     environment{
         REACT_APP_VERSION = "1.0.$BUILD_ID"
         AWS_DEFAULT_REGION = "us-east-1"
+        AWS_ECS_CLUSTER = "learn-jenkins-prod"
+        AWS_ECS_SERVICE_PROD = "learn-jenkins-prod-taskdefinition-service-lf4jjyoa"
+        AWS_ECS_TD_PROD = "learn-jenkins-prod-taskdefinition"
         
     }
 
     stages {
          stage("aws deploy"){
 
-          agent{
-             docker{
-                image 'amazon/aws-cli:latest'
-                args '-u root --entrypoint=""'
-                reuseNode true
+            agent{
+                docker{
+                    image 'amazon/aws-cli:latest'
+                    args '-u root --entrypoint=""'
+                    reuseNode true
+                }
             }
-        }
     
-          steps {
+            steps {
                 withCredentials([usernamePassword(credentialsId: 'aws-creds', passwordVariable: 'AWS_SECRET_ACCESS_KEY', usernameVariable: 'AWS_ACCESS_KEY_ID')]) {
                     sh'''
                     aws --version
                     yum install jq -y
                     LATEST_TD_REVISION=$(aws ecs register-task-definition --cli-input-json file://aws/task-definition-prod.json | jq '.taskDefinition.revision')
                     echo $LATEST_TD_REVISION
-                    aws ecs update-service --cluster learn-jenkins-prod  --service learn-jenkins-prod-taskdefinition-service-lf4jjyoa  --task-definition learn-jenkins-prod-taskdefinition:$LATEST_TD_REVISION
-                    aws ecs wait services-stable --cluster learn-jenkins-prod --services learn-jenkins-prod-taskdefinition-service-lf4jjyoa
+                    aws ecs update-service --cluster $AWS_ECS_CLUSTER --service $AWS_ECS_SERVICE_PROD --task-definition $AWS_ECS_TD_PROD:$LATEST_TD_REVISION
+                    aws ecs wait services-stable --cluster $AWS_ECS_CLUSTER --service $AWS_ECS_SERVICE_PROD 
+
                     '''
-                 }
-                
+      
+                }
             }
-              
-        }
         stage('Build') {
             agent {
                 docker {
